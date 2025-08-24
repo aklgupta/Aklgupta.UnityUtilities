@@ -1,23 +1,14 @@
-using System.Diagnostics;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Aklgupta.Utils.UnityExtensions {
 	public static class MonoBehaviourExtensions {
 
-		[Conditional("UNITY_EDITOR")]
-		public static void Log(this object source, object obj) {
-			Debug.Log($"Ext [{source.GetType().Name}] : {obj}", source as Object);
-		}
+		public static bool TryAddComponent<T>(this MonoBehaviour behaviour, out T component) where T : Component {
+			if (behaviour.TryGetComponent(out component))
+				return false;
 
-		[Conditional("UNITY_EDITOR")]
-		public static void LogWarning(this object source, object obj) {
-			Debug.LogWarning($"Ext [{source.GetType().Name}] : {obj}", source as Object);
-		}
-
-		[Conditional("UNITY_EDITOR")]
-		public static void LogError(this object source, object obj) {
-			Debug.LogError($"Ext [{source.GetType().Name}] : {obj}", source as Object);
+			component = behaviour.gameObject.AddComponent<T>();
+			return true;
 		}
 
 	}
