@@ -6,17 +6,22 @@ namespace Aklgupta.Utils.Logger {
 	public static class Logger {
 
 		[Conditional("UNITY_EDITOR")]
-		[Conditional("UNITY_LOG")]
+		[Conditional("DEBUG_LOG")]
 		public static void Log(this object source, object message) {
 			Debug.Log($"{GetPrefix(source)}{message}", source as Object);
 		}
 
 		[Conditional("UNITY_EDITOR")]
+		[Conditional("DEBUG_LOG")]
+		[Conditional("DEBUG_LOG_WARNING")]
 		public static void LogWarning(this object source, object message) {
 			Debug.LogWarning($"{GetPrefix(source)}{message}", source as Object);
 		}
 
 		[Conditional("UNITY_EDITOR")]
+		[Conditional("DEBUG_LOG")]
+		[Conditional("DEBUG_LOG_WARNING")]
+		[Conditional("DEBUG_LOG_ERROR")]
 		public static void LogError(this object source, object message) {
 			Debug.LogError($"{GetPrefix(source)}{message}", source as Object);
 		}
