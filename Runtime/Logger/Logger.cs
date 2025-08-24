@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
+
 namespace Aklgupta.Utils.Logger {
 	public static class Logger {
 
@@ -36,7 +37,7 @@ namespace Aklgupta.Utils.Logger {
 			if (perfixSourceType)
 				prefixes.Add(source.GetType().Name);
 
-			
+
 			return prefixes.Count > 0 ? $"{string.Join(",", prefixes.Select(x => $"[{x}]"))} : " : "";
 		}
 
