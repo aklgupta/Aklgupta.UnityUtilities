@@ -8,7 +8,7 @@ using Debug = UnityEngine.Debug;
 namespace Aklgupta.Utils.Logger {
 	public static class Logger {
 
-		public static bool prefixSourceType = true;
+		public static bool PrefixSourceType { get; set; } = true;
 
 		[Conditional("UNITY_EDITOR")]
 		[Conditional("DEBUG_LOG")]
@@ -34,7 +34,7 @@ namespace Aklgupta.Utils.Logger {
 		private static string GetPrefix(object source) {
 			var prefixes = new List<string>();
 
-			if (prefixSourceType)
+			if (PrefixSourceType)
 				prefixes.Add(source.GetType().Name);
 
 
