@@ -16,6 +16,10 @@ namespace Aklgupta.Utils.PropertyDrawers {
 	[CustomPropertyDrawer(typeof(ShowFields))]
 	public class ShowFieldsDrawer : PropertyDrawer {
 
+		private record ErrorMessage(string msg) {
+			public string msg { get; } = msg;
+		}
+
 		private static GUIStyle nullFieldStyle;
 
 		private bool foldoutToggle = true;
@@ -42,6 +46,11 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			var targetObject = property.serializedObject.targetObject;
 			foreach (var fieldName in fields) {
 				GetFieldInfo(targetObject, fieldName, out var type, out var value);
+
+				if (value is ErrorMessage msg) {
+					EditorGUILayout.TextField(fieldName, msg.msg, nullFieldStyle);
+					continue;
+				}
 				
 				switch (Type.GetTypeCode(type)) {
 					case TypeCode.Boolean:
@@ -64,7 +73,6 @@ namespace Aklgupta.Utils.PropertyDrawers {
 						EditorGUILayout.TextField(fieldName, value.ToString());
 						break;
 					case TypeCode.Object:
-						Debug.Log($"{type}|{value}");
 						switch (value) {
 							case Object o:
 								EditorGUILayout.ObjectField(fieldName, o, type);
@@ -105,12 +113,28 @@ namespace Aklgupta.Utils.PropertyDrawers {
 					value = prop.GetValue(targetObject);
 				}
 				catch (Exception) {
-					value = "property value could not be fetched";
+					value = new ErrorMessage("Property value could not be fetched");
 				}
+				return;
 			}
-			else {
-				throw new Exception("Passed field name is neither a Data Field nor a Property");
+
+			var method = targetObject.GetType().GetMethod(
+				fieldName,
+				BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance
+			);
+			if (method != null) {
+				type = method.ReturnType;
+				try {
+					value = method.Invoke(targetObject, null);
+				}
+				catch (Exception) {
+					value = new ErrorMessage("The method failed");
+				}
+				return;
 			}
+			
+			value = new ErrorMessage("Passed parameter couldn't be determined");
+			type = value.GetType();
 		}
 
 
