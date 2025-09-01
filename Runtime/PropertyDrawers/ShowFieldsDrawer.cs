@@ -16,6 +16,7 @@ namespace Aklgupta.Utils.PropertyDrawers {
 		public ShowFields(params string[] fields) => this.fields = new List<string>(fields);
 	}
 
+
 	[CustomPropertyDrawer(typeof(ShowFields))]
 	public class ShowFieldsDrawer : PropertyDrawer, IDisposable  {
 
@@ -23,9 +24,13 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			public string Message { get; } = Message;
 		}
 
+		private Object targetObject;
+		private bool pollingRunning;
+		private Dictionary<VisualElement, string> elements = new();
+
 		public override VisualElement CreatePropertyGUI(SerializedProperty property) {
 			var fields = ((ShowFields)attribute).fields;
-			
+
 			if (fields.Count == 0)
 				return new HelpBox ($"[{nameof(ShowFields)}] Please add at least 1 field to display data for", HelpBoxMessageType.Warning);
 			
@@ -33,68 +38,53 @@ namespace Aklgupta.Utils.PropertyDrawers {
 				text = "data",
 			};
 
-			var targetObject = property.serializedObject.targetObject;
+			targetObject = property.serializedObject.targetObject;
 			foreach (var fieldName in fields) {
-				GetFieldInfo(targetObject, fieldName, out var type, out var value);
+				GetFieldInfo(fieldName, out var type, out var value);
 
 
 				if (value is ErrorMessage msg) {
 					var textField = CreateTextField(fieldName, msg.Message);
 					SetColor(textField, Color.red);
+					elements.Add(textField, fieldName);
 					continue;
 				}
 				
 				switch (Type.GetTypeCode(type)) {
 					case TypeCode.Boolean:
-						foldout.Add(new Toggle{
+						var toggle = new Toggle{
 							label = fieldName,
 							value = (bool)value,
 							enabledSelf = false,
-						});
-						break;
-					case TypeCode.Byte:
-					case TypeCode.Char:
-					case TypeCode.DateTime:
-					case TypeCode.Decimal:
-					case TypeCode.Double:
-					case TypeCode.Int16:
-					case TypeCode.Int32:
-					case TypeCode.Int64:
-					case TypeCode.SByte:
-					case TypeCode.Single:
-					case TypeCode.String:
-					case TypeCode.UInt16:
-					case TypeCode.UInt32:
-					case TypeCode.UInt64:
-						var textField = new TextField {
-							label = fieldName,
-							value = value.ToString(),
-							enabledSelf = false,
 						};
-						foldout.Add(textField);
+						foldout.Add(toggle);
+						elements.Add(toggle, fieldName);
 						break;
+					case TypeCode.DateTime or TypeCode.Char or TypeCode.String or TypeCode.Decimal or TypeCode.Double or TypeCode.Single
+						or TypeCode.Byte or TypeCode.SByte or TypeCode.Int16 or TypeCode.Int32 or TypeCode.Int64 or TypeCode.UInt16
+						or TypeCode.UInt32 or TypeCode.UInt64:
+					{
+						var commonField = CreateTextField(fieldName, value.ToString());
+						elements.Add(commonField, fieldName);
+						break;
+					}
 					case TypeCode.Object:
 						switch (value) {
 							case Object o:
-								foldout.Add(new ObjectField{
+								var objectField = new ObjectField{
 									label = fieldName,
 									value = o,
 									enabledSelf = false,
-								});
-								break;
-							case null:
-								foldout.Add(new TextField {
-									label = fieldName,
-									value = "null",
-									enabledSelf = false,
-								});
+								};
+								foldout.Add(objectField);
+								elements.Add(objectField, fieldName);
 								break;
 							default:
-								foldout.Add(new TextField {
-									label = fieldName,
-									value = value.ToString(),
-									enabledSelf = false,
-								});
+								var objectText = CreateTextField(fieldName, "null");
+								if (value == null)
+									SetColor(objectText, Color.red);
+								ResetColor(objectText);
+								elements.Add(objectText, fieldName);
 								break;
 						}
 						break;
@@ -117,20 +107,21 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			}
 		}
 
-		private static void SetColor(TextField textField, Color color) {
-			((TextElement)(textField.textEdition)).style.color = color;
-		}
+		private static void SetColor(TextField textField, Color color) => ((TextElement)(textField.textEdition)).style.color = color;
 
-		private bool run;
+		private static void ResetColor(TextField textField) => ((TextElement)(textField.textEdition)).style.color = StyleKeyword.Null;
+
+		
 		private async void Poller() {
-			run = true;
-			for (int i = 0; i < 5 && run; i++) {
-				Debug.Log(DateTime.Now.ToString());
+			if (pollingRunning)
+				return;
+			pollingRunning = true;
+			while (pollingRunning) {
 				await Task.Delay(100);
 			}
 		}
 
-		private static void GetFieldInfo(Object targetObject, string fieldName, out Type type, out object value) {
+		private void GetFieldInfo(string fieldName, out Type type, out object value) {
 			var field = targetObject.GetType().GetField(
 				fieldName,
 				BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance
@@ -175,10 +166,8 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			type = value.GetType();
 		}
 
-
-
 		public void Dispose() {
-			run = false;
+			pollingRunning = false;
 		}
 	}
 }
