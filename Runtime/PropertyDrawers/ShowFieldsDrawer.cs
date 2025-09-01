@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 
@@ -14,47 +17,40 @@ namespace Aklgupta.Utils.PropertyDrawers {
 	}
 
 	[CustomPropertyDrawer(typeof(ShowFields))]
-	public class ShowFieldsDrawer : PropertyDrawer {
+	public class ShowFieldsDrawer : PropertyDrawer, IDisposable  {
 
-		private record ErrorMessage(string msg) {
-			public string msg { get; } = msg;
+		private record ErrorMessage(string Message) {
+			public string Message { get; } = Message;
 		}
 
-		private static GUIStyle nullFieldStyle;
-
-		private bool foldoutToggle = true;
-
-		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
-			nullFieldStyle ??= new GUIStyle(GUI.skin.textField) {
-				fontStyle = FontStyle.Italic,
-				normal = {textColor = Color.red},
-				active = {textColor = Color.red},
-				hover = {textColor = Color.red},
-				focused = {textColor = Color.red},
-			};
-
+		public override VisualElement CreatePropertyGUI(SerializedProperty property) {
 			var fields = ((ShowFields)attribute).fields;
 			
 			if (fields.Count == 0)
-				EditorGUI.HelpBox(position, "Please select at least 1 field to display data for", MessageType.Warning);
+				return new HelpBox ($"[{nameof(ShowFields)}] Please add at least 1 field to display data for", HelpBoxMessageType.Warning);
+			
+			var foldout = new Foldout {
+				text = "data",
+			};
 
-			foldoutToggle = EditorGUI.Foldout(position, foldoutToggle, "Data");
-			if(!foldoutToggle)
-				return;
-
-			GUI.enabled = false;
 			var targetObject = property.serializedObject.targetObject;
 			foreach (var fieldName in fields) {
 				GetFieldInfo(targetObject, fieldName, out var type, out var value);
 
+
 				if (value is ErrorMessage msg) {
-					EditorGUILayout.TextField(fieldName, msg.msg, nullFieldStyle);
+					var textField = CreateTextField(fieldName, msg.Message);
+					SetColor(textField, Color.red);
 					continue;
 				}
 				
 				switch (Type.GetTypeCode(type)) {
 					case TypeCode.Boolean:
-						EditorGUILayout.Toggle(fieldName, (bool)value);
+						foldout.Add(new Toggle{
+							label = fieldName,
+							value = (bool)value,
+							enabledSelf = false,
+						});
 						break;
 					case TypeCode.Byte:
 					case TypeCode.Char:
@@ -70,18 +66,35 @@ namespace Aklgupta.Utils.PropertyDrawers {
 					case TypeCode.UInt16:
 					case TypeCode.UInt32:
 					case TypeCode.UInt64:
-						EditorGUILayout.TextField(fieldName, value.ToString());
+						var textField = new TextField {
+							label = fieldName,
+							value = value.ToString(),
+							enabledSelf = false,
+						};
+						foldout.Add(textField);
 						break;
 					case TypeCode.Object:
 						switch (value) {
 							case Object o:
-								EditorGUILayout.ObjectField(fieldName, o, type);
+								foldout.Add(new ObjectField{
+									label = fieldName,
+									value = o,
+									enabledSelf = false,
+								});
 								break;
 							case null:
-								EditorGUILayout.TextField(fieldName, "null", nullFieldStyle);
+								foldout.Add(new TextField {
+									label = fieldName,
+									value = "null",
+									enabledSelf = false,
+								});
 								break;
 							default:
-								EditorGUILayout.TextField(fieldName, value.ToString());
+								foldout.Add(new TextField {
+									label = fieldName,
+									value = value.ToString(),
+									enabledSelf = false,
+								});
 								break;
 						}
 						break;
@@ -89,7 +102,32 @@ namespace Aklgupta.Utils.PropertyDrawers {
 						throw new ArgumentOutOfRangeException();
 				}
 			}
-			GUI.enabled = true;
+
+			Poller();
+			return foldout;
+
+			TextField CreateTextField(string fieldName, string msg) {
+				var textField = new TextField {
+					label = fieldName,
+					value = msg,
+					enabledSelf = false,
+				};
+				foldout.Add(textField);
+				return textField;
+			}
+		}
+
+		private static void SetColor(TextField textField, Color color) {
+			((TextElement)(textField.textEdition)).style.color = color;
+		}
+
+		private bool run;
+		private async void Poller() {
+			run = true;
+			for (int i = 0; i < 5 && run; i++) {
+				Debug.Log(DateTime.Now.ToString());
+				await Task.Delay(100);
+			}
 		}
 
 		private static void GetFieldInfo(Object targetObject, string fieldName, out Type type, out object value) {
@@ -139,5 +177,8 @@ namespace Aklgupta.Utils.PropertyDrawers {
 
 
 
+		public void Dispose() {
+			run = false;
+		}
 	}
 }
