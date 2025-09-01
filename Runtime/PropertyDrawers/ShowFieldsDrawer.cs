@@ -32,8 +32,8 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			var fields = ((ShowFields)attribute).fields;
 
 			if (fields.Count == 0)
-				return new HelpBox ($"[{nameof(ShowFields)}] Please add at least 1 field to display data for", HelpBoxMessageType.Warning);
-			
+				return new HelpBox($"[{nameof(ShowFields)}] Please add at least 1 field to display data for", HelpBoxMessageType.Warning);
+
 			var foldout = new Foldout {
 				text = "data",
 			};
@@ -44,15 +44,13 @@ namespace Aklgupta.Utils.PropertyDrawers {
 
 
 				if (value is ErrorMessage msg) {
-					var textField = CreateTextField(fieldName, msg.Message);
-					SetColor(textField, Color.red);
-					elements.Add(textField, fieldName);
+					elements.Add(CreateTextField(fieldName, msg.Message, true), fieldName);
 					continue;
 				}
-				
+
 				switch (Type.GetTypeCode(type)) {
 					case TypeCode.Boolean:
-						var toggle = new Toggle{
+						var toggle = new Toggle {
 							label = fieldName,
 							value = (bool)value,
 							enabledSelf = false,
@@ -64,14 +62,13 @@ namespace Aklgupta.Utils.PropertyDrawers {
 						or TypeCode.Byte or TypeCode.SByte or TypeCode.Int16 or TypeCode.Int32 or TypeCode.Int64 or TypeCode.UInt16
 						or TypeCode.UInt32 or TypeCode.UInt64:
 					{
-						var commonField = CreateTextField(fieldName, value.ToString());
-						elements.Add(commonField, fieldName);
+						elements.Add(CreateTextField(fieldName, value.ToString()), fieldName);
 						break;
 					}
 					case TypeCode.Object:
 						switch (value) {
 							case Object o:
-								var objectField = new ObjectField{
+								var objectField = new ObjectField {
 									label = fieldName,
 									value = o,
 									enabledSelf = false,
@@ -80,11 +77,11 @@ namespace Aklgupta.Utils.PropertyDrawers {
 								elements.Add(objectField, fieldName);
 								break;
 							default:
-								var objectText = CreateTextField(fieldName, "null");
 								if (value == null)
-									SetColor(objectText, Color.red);
-								ResetColor(objectText);
-								elements.Add(objectText, fieldName);
+									elements.Add(CreateTextField(fieldName, "null", true), fieldName);
+								else
+									elements.Add(CreateTextField(fieldName, value.ToString()), fieldName);
+
 								break;
 						}
 						break;
@@ -96,13 +93,15 @@ namespace Aklgupta.Utils.PropertyDrawers {
 			Poller();
 			return foldout;
 
-			TextField CreateTextField(string fieldName, string msg) {
+			TextField CreateTextField(string fieldName, string msg, bool error = false) {
 				var textField = new TextField {
 					label = fieldName,
 					value = msg,
 					enabledSelf = false,
 				};
 				foldout.Add(textField);
+				if (error)
+					SetColor(textField, Color.red);
 				return textField;
 			}
 		}
