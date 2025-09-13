@@ -68,9 +68,9 @@ namespace Aklgupta.Utils.Logger {
 		private static string GetPrefix(object source) {
 			var prefixes = new List<string>();
 
-			if(PrefixObjectName && source is Object o)
+			if (PrefixObjectName && source is Object o)
 				prefixes.Add(o.name);
-			
+
 			if (PrefixSourceType)
 				prefixes.Add(source.GetType().Name);
 
