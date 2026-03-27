@@ -8,20 +8,27 @@ using Debug = UnityEngine.Debug;
 namespace Aklgupta.Utils.Logger {
 	public static class Logger {
 
+		// TODO: Replace with a better way to confirm the logger, and maybe also change the config temporality
+		// Maybe use a list of prefix/suffix method list
 		public static bool PrefixObjectName { get; set; } = true;
+
 		public static bool PrefixSourceType { get; set; } = true;
+
+		public static bool PrefixLogTime { get; set; } = true;
+
+		#region Log Methods
 
 		[Conditional("UNITY_EDITOR")]
 		[Conditional("DEBUG_LOG")]
 		public static void Log(object message) {
-			Debug.Log($"{GetPrefix()}{message}");
+			Debug.Log($"{GetPrefix(null)}{message}");
 		}
 
 		[Conditional("UNITY_EDITOR")]
 		[Conditional("DEBUG_LOG")]
 		[Conditional("DEBUG_LOG_WARNING")]
 		public static void LogWarning(object message) {
-			Debug.LogWarning($"{GetPrefix()}{message}");
+			Debug.LogWarning($"{GetPrefix(null)}{message}");
 		}
 
 		[Conditional("UNITY_EDITOR")]
@@ -29,7 +36,7 @@ namespace Aklgupta.Utils.Logger {
 		[Conditional("DEBUG_LOG_WARNING")]
 		[Conditional("DEBUG_LOG_ERROR")]
 		public static void LogError(object message) {
-			Debug.LogError($"{GetPrefix()}{message}");
+			Debug.LogError($"{GetPrefix(null)}{message}");
 		}
 
 
@@ -54,25 +61,23 @@ namespace Aklgupta.Utils.Logger {
 			Debug.LogError($"{GetPrefix(source)}{message}", source as Object);
 		}
 
-
-		private static string GetPrefix() {
-			var prefixes = new List<string>();
-
-			if (PrefixObjectName || PrefixSourceType)
-				prefixes.Add("<i>null</i>");
-
-
-			return prefixes.Count > 0 ? $"{string.Join(" ", prefixes.Select(x => $"[{x}]"))} : " : null;
-		}
+		#endregion
 
 		private static string GetPrefix(object source) {
 			var prefixes = new List<string>();
 
-			if (PrefixObjectName && source is Object o)
-				prefixes.Add(o.name);
+			if (PrefixObjectName) {
+				if (source is Object o)
+					prefixes.Add(o.name);
+				else
+					prefixes.Add("<i>null</i>");
+			}
 
 			if (PrefixSourceType)
-				prefixes.Add(source.GetType().Name);
+				prefixes.Add(source != null ? source.GetType().Name : "<i>null</i>");
+
+			if (PrefixLogTime)
+				prefixes.Add($"{Time.time}");
 
 			return prefixes.Count > 0 ? $"{string.Join(" ", prefixes.Select(x => $"[{x}]"))} : " : null;
 		}
