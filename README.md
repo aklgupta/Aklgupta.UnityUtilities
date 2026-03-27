@@ -1,3 +1,3 @@
 # Common Unity Utils
 
-It should include only project agnostic, common utils & libs.
+This is a **work in progress** Unity Package for generic utilities. Please use with caution.
