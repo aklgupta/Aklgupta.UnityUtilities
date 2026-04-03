@@ -59,10 +59,10 @@ namespace Aklgupta.Utils.Logger {
 
 		// TODO: Replace with a better way to confirm the logger, and maybe also change the config temporarily
 		// Maybe use a list of prefix/suffix method list
+		public static bool PrefixRealTimestamp { get; set; } = true;
 		public static bool PrefixObjectName { get; set; } = true;
 		public static bool PrefixSourceType { get; set; } = true;
-		public static bool PrefixLogTime { get; set; } = true;
-		public static bool PrefixRealTimestamp { get; set; } = false;
+		public static bool PrefixLogTime { get; set; } = false;
 		public static bool PrefixFrameCount { get; set; } = false;
 		public static bool PrefixSceneName { get; set; } = false;
 
