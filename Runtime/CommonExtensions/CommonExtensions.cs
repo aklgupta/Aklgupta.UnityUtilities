@@ -36,12 +36,20 @@ namespace Aklgupta.Utils.CommonExtensions {
 			return Random.Range(vector2.y, vector2.x);
 		}
 
-		public static float RandomRange(this Vector2Int vector2) {
+		public static int RandomRange(this Vector2Int vector2) {
 			if (vector2.x < vector2.y)
 				return Random.Range(vector2.x, vector2.y);
 
 			Logger.Logger.LogWarning($"x should be less than y, reversing the values ({vector2})");
 			return Random.Range(vector2.y, vector2.x);
+		}
+
+		public static Vector3 RandomBetween(this Vector3 a, Vector3 b) {
+			return new Vector3(
+				Random.Range(a.x, b.x),
+				Random.Range(a.y, b.y),
+				Random.Range(a.z, b.z)
+			);
 		}
 
 	}
